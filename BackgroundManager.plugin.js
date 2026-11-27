@@ -1,8 +1,8 @@
 /**
  * @name BackgroundManager
  * @author Local rewrite
- * @description 本機資料夾背景輪播與獨立區域背景（不修改 Discord 內部模組）。
- * @version 3.1.0
+ * @description 本機資料夾背景輪播、獨立區域與自訂同步群組（不修改 Discord 內部模組）。
+ * @version 3.2.0
  */
 class WallpaperSource {
   constructor(owner, zone) {
@@ -74,7 +74,6 @@ class WallpaperSource {
   read(f) {
     if(f.file)return f.file;
     const fs=this.getFS(), st=fs.statSync(f.path);if(!this.valid(f.name,Number(st.size)))throw Error('圖片超過 12 MiB 或已不存在');
-    // One bounded read. No Buffer guessing, retries, or IPC fallback.
     const data=fs.readFileSync(f.path,'base64');
     if(typeof data!=='string'||data.length>16*1024*1024+8)throw Error('檔案 API 未回傳預期的 Base64 字串，請改用「原生選取資料夾」');
     const raw=atob(data);if(raw.length!==Number(st.size))throw Error('圖片位元組長度不符');
@@ -120,6 +119,8 @@ const ZONES = [
   {id:'members', label:'右側成員列表', selectors:['[class^="membersWrap_"]','[class^="members_"]']},
   {id:'user', label:'底部使用者控制列', selectors:['[class^="panels_"]']}
 ];
+const GROUPS = ['A','B','C','D','E'].map(letter=>({id:`group${letter}`,label:`同步群組 ${letter}`}));
+const isGroup = id => GROUPS.some(g=>g.id===id);
 const SOURCE_DEFAULTS={path:'',recursive:false,shuffle:true,minutes:10,fade:1000,dim:50,blur:0,auto:false,fit:'cover',x:50,y:50};
 const REGION_DEFAULTS={mode:'shared',override:false,dim:50,blur:0,fit:'cover',x:50,y:50,source:{}};
 const CSS=`
@@ -128,24 +129,27 @@ const CSS=`
       body:has(> #bgm-local-v3) #app-mount {position:relative;z-index:1;background:transparent!important;}
       body:has(> #bgm-local-v3) #app-mount :is([class^="app_"],[class*=" app_"],[class^="appMount_"],[class^="bg_"],[class*=" bg_"],[class^="base_"],[class^="baseLayer_"],[class^="layers_"],[class^="layer_"],[class^="content_"],[class^="chat_"],[class^="chatContent_"],[class^="sidebar_"],[class^="sidebarList_"],[class^="guilds_"],[class^="membersWrap_"],[class^="members_"],[class^="container_"][class*="themed_"],[class^="privateChannels_"],[class^="scroller_"][class*="thin_"]) {background-color:transparent!important;}
       body:has(> #bgm-local-v3) #app-mount :is(.theme-dark,.theme-light,#app-mount), body:has(> #bgm-local-v3) #app-mount {--background-primary:transparent;--background-secondary:transparent;--background-secondary-alt:rgba(0,0,0,.12);--background-tertiary:transparent;--background-base-lowest:transparent;--background-base-lower:transparent;--background-base-low:transparent;--background-base-normal:transparent;--background-surface-high:rgba(25,25,29,.82);--bg-base-primary:transparent;--bg-base-secondary:transparent;--bg-base-tertiary:transparent;--bg-surface-overlay:rgba(25,25,29,.94);--chat-background-default:transparent;--app-frame-background:transparent;--custom-channel-members-bg:transparent;}
-      
       #bgm-local-v3 .bgm-frame {position:absolute;overflow:hidden;pointer-events:none;}
       #bgm-local-v3 .bgm-picture {background-repeat:no-repeat; background-size:var(--bgm-fit,cover);background-position:var(--bgm-position,center);}
       body:has(> #bgm-local-v3) #app-mount [data-bgm-zone], body:has(> #bgm-local-v3) #app-mount [data-bgm-zone="user"] > [class^="container_"] {background-color:transparent!important;}
 `;
 module.exports=class BackgroundManager {
-  constructor(){this.id='BackgroundManager';this.key='folderRewriteV3';this.regionKey='regionsV31';this.running=false;this.sources={};this.regions={};this.root=null;this.css=null;this.overlays={};this.targets={};this.nativeColors={};this.timer=null;this.refreshUI=null;this.base='#18191c';this.decodeTail=Promise.resolve();}
+  constructor(){this.id='BackgroundManager';this.key='folderRewriteV3';this.regionKey='regionsV31';this.groupKey='groupsV32';this.running=false;this.sources={};this.regions={};this.groups={};this.root=null;this.css=null;this.overlays={};this.targets={};this.nativeColors={};this.timer=null;this.refreshUI=null;this.base='#18191c';this.decodeTail=Promise.resolve();}
   num(v,min,max,d){const n=Number(v);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):d;}
   cleanSource(v){const a={...SOURCE_DEFAULTS,...(v||{})};for(const [k,min,max] of [['minutes',1,1440],['fade',0,5000],['dim',0,95],['blur',0,20],['x',0,100],['y',0,100]])a[k]=this.num(a[k],min,max,SOURCE_DEFAULTS[k]);a.fit=['cover','contain','auto','100% 100%'].includes(a.fit)?a.fit:'cover';a.path=typeof a.path==='string'?a.path:'';for(const k of ['recursive','shuffle','auto'])a[k]=typeof a[k]==='boolean'?a[k]:SOURCE_DEFAULTS[k];return a;}
-  cleanRegion(v){const r={...REGION_DEFAULTS,...(v||{})};r.mode=['native','shared','independent'].includes(r.mode)?r.mode:'shared';r.override=r.override===true;const a=this.cleanSource(r);for(const k of ['dim','blur','fit','x','y'])r[k]=a[k];r.source=this.cleanSource(r.source);return r;}
+  cleanRegion(v){const r={...REGION_DEFAULTS,...(v||{})};r.mode=['native','shared','independent',...GROUPS.map(g=>g.id)].includes(r.mode)?r.mode:'shared';r.override=r.override===true;const a=this.cleanSource(r);for(const k of ['dim','blur','fit','x','y'])r[k]=a[k];r.source=this.cleanSource(r.source);return r;}
   acquire(){let release;const prior=this.decodeTail;this.decodeTail=new Promise(r=>{release=r;});return prior.then(()=>release);}
-  sourceSettings(zone){return zone==='shared'?this.shared:this.regions[zone].source;}
-  order(zone){return zone==='shared'?0:ZONES.findIndex(z=>z.id===zone)+1;}
-  start(){if(this.running)return;this.running=true;let old,regions;try{old=BdApi.Data.load(this.id,this.key);regions=BdApi.Data.load(this.id,this.regionKey);}catch(e){console.warn('[BackgroundManager]',e);}
-    this.shared=this.cleanSource(old);for(const z of ZONES)this.regions[z.id]=this.cleanRegion(regions?.[z.id]);
+  sourceSettings(zone){return zone==='shared'?this.shared:isGroup(zone)?this.groups[zone]:this.regions[zone].source;}
+  order(zone){return zone==='shared'?0:isGroup(zone)?ZONES.length+1+GROUPS.findIndex(g=>g.id===zone):ZONES.findIndex(z=>z.id===zone)+1;}
+  groupMembers(id){return ZONES.filter(z=>this.regions[z.id]?.mode===id);}
+  regionSource(id){const mode=this.regions[id]?.mode;if(mode==='shared'||isGroup(mode))return this.sources[mode];if(mode==='independent')return this.sources[id];return null;}
+  updateGroupSources(){for(const g of GROUPS){const s=this.sources[g.id];if(!s)continue;const needed=this.groupMembers(g.id).length>0;if(needed&&!s.running){s.setStatus('尚未載入背景');s.start();}else if(!needed&&s.running){s.stop();s.setStatus('未使用');}}}
+  start(){if(this.running)return;this.running=true;let old,regions,groups;try{old=BdApi.Data.load(this.id,this.key);regions=BdApi.Data.load(this.id,this.regionKey);groups=BdApi.Data.load(this.id,this.groupKey);}catch(e){console.warn('[BackgroundManager]',e);}
+    this.shared=this.cleanSource(old);for(const z of ZONES)this.regions[z.id]=this.cleanRegion(regions?.[z.id]);for(const g of GROUPS)this.groups[g.id]=this.cleanSource(groups?.[g.id]);
     this.sources.shared=new WallpaperSource(this,'shared');this.sources.shared.start();for(const z of ZONES){const src=this.sources[z.id]=new WallpaperSource(this,z.id);src.s=this.regions[z.id].source;if(this.regions[z.id].mode==='independent')src.start();}
+    for(const g of GROUPS){const src=this.sources[g.id]=new WallpaperSource(this,g.id);src.s=this.groups[g.id];src.status='未使用';}this.updateGroupSources();
   }
-  save(){try{BdApi.Data.save(this.id,this.key,this.shared);BdApi.Data.save(this.id,this.regionKey,this.regions);}catch(e){console.warn('[BackgroundManager] save',e);}}
+  save(){try{BdApi.Data.save(this.id,this.key,this.shared);BdApi.Data.save(this.id,this.regionKey,this.regions);BdApi.Data.save(this.id,this.groupKey,this.groups);}catch(e){console.warn('[BackgroundManager] save',e);}}
   stop(){this.running=false;clearInterval(this.timer);this.timer=null;for(const s of Object.values(this.sources))s.stop();this.unmount();this.sources={};this.refreshUI=null;}
   unmount(){clearInterval(this.timer);this.timer=null;this.root?.remove();this.css?.remove();this.root=this.css=null;for(const t of Object.values(this.targets))t?.removeAttribute('data-bgm-zone');this.targets={};this.overlays={};this.nativeColors={};}
   target(z){for(const sel of z.selectors){for(const e of document.querySelectorAll('#app-mount '+sel)){const r=e.getBoundingClientRect();if(r.width>5&&r.height>5&&getComputedStyle(e).visibility!=='hidden')return e;}}return null;}
@@ -155,7 +159,7 @@ module.exports=class BackgroundManager {
     for(const z of ZONES){const e=this.target(z);const fallback=(style?.getPropertyValue(z.id==='chat'?'--background-primary':'--background-secondary')||'').trim();this.nativeColors[z.id]=fallback&&fallback!=='transparent'?fallback:this.base;this.nativeColors[z.id]=this.nativeColor(e,z.id);}
     const root=document.createElement('div');root.id='bgm-local-v3';root.setAttribute('aria-hidden','true');root.style.setProperty('--bgm-base',this.base);const css=document.createElement('style');css.textContent=CSS;document.head.append(css);document.body.prepend(root);this.root=root;this.css=css;this.timer=setInterval(()=>{try{this.render();}catch(e){console.warn('[BackgroundManager] layout',e);}},500);return root;
   }
-  frame(zone){const e=document.createElement('div');e.className='bgm-frame';e.dataset.bgmFrame=zone;e.style.zIndex=String(this.order(zone));if(zone==='shared')e.style.inset='0';return e;}
+  frame(zone){const e=document.createElement('div');e.className='bgm-frame';e.dataset.bgmFrame=zone;e.style.zIndex=String(this.order(zone));if(zone==='shared')e.style.inset='0';if(isGroup(zone))e.style.display='none';return e;}
   styleFrame(e,s){e.style.setProperty('--bgm-fade',`${s.fade??this.shared.fade}ms`);e.style.setProperty('--bgm-bright',String(1-s.dim/100));e.style.setProperty('--bgm-blur',`${s.blur}px`);e.style.setProperty('--bgm-fit',s.fit||'cover');e.style.setProperty('--bgm-position',`${s.x??50}% ${s.y??50}%`);}
   geometry(e,t){if(!t){e.style.display='none';return;}const r=t.getBoundingClientRect();e.style.display='';Object.assign(e.style,{left:`${r.left}px`,top:`${r.top}px`,width:`${r.width}px`,height:`${r.height}px`});}
   removeOverlay(id){this.overlays[id]?.remove();delete this.overlays[id];}
@@ -167,13 +171,16 @@ module.exports=class BackgroundManager {
       if(r.mode==='shared'&&!r.override&&shared.index>=0){this.removeOverlay(id);continue;}
       if(!t){this.removeOverlay(id);continue;}
       const e=this.overlay(id);this.geometry(e,t);
-      if(r.mode==='native'||r.mode==='independent'||shared.index<0){if(e.children.length)e.replaceChildren();e.style.backgroundColor=this.base;const color=this.nativeColors[id]||this.base;e.style.backgroundImage=`linear-gradient(${color},${color})`;continue;}
-      e.style.backgroundColor=this.base;e.style.backgroundImage='none';this.styleFrame(e,{...r,fade:shared.s.fade});
-      if(e.children.length!==2){e.replaceChildren();for(let i=0;i<2;i++){const l=document.createElement('div');l.className='bgm-picture';e.append(l);}}
-      for(let i=0;i<2;i++){const l=e.children[i],u=shared.urls[i];const img=u?`url("${u}")`:'';if(l.style.backgroundImage!==img){l.style.backgroundImage=img;if(i===shared.index){l.style.opacity='0';void l.offsetWidth;}}l.style.opacity=i===shared.index?'1':'0';}
+      const selected=this.regionSource(id);
+      if(r.mode==='native'||r.mode==='independent'||!selected||selected.index<0||!selected.root?.isConnected){if(e.children.length)e.replaceChildren();delete e.dataset.bgmSource;e.style.backgroundColor=this.base;const color=this.nativeColors[id]||this.base;e.style.backgroundImage=`linear-gradient(${color},${color})`;continue;}
+      e.style.backgroundColor=this.base;e.style.backgroundImage='none';this.styleFrame(e,r.override?{...r,fade:selected.s.fade}:selected.s);
+      // Each group owns its image URLs and timer. The region only mirrors those two layers.
+      // Reset on reassignment to prevent showing a previous group's image during a transition.
+      if(e.dataset.bgmSource!==selected.zone||e.children.length!==2){e.replaceChildren();e.dataset.bgmSource=selected.zone;for(let i=0;i<2;i++){const l=document.createElement('div');l.className='bgm-picture';e.append(l);}}
+      for(let i=0;i<2;i++){const l=e.children[i],u=selected.urls[i];const img=u?`url("${u}")`:'';if(l.style.backgroundImage!==img){l.style.backgroundImage=img;if(i===selected.index){l.style.opacity='0';void l.offsetWidth;}}l.style.opacity=i===selected.index?'1':'0';}
     }
   }
-  setMode(id,mode){const r=this.regions[id],s=this.sources[id];if(r.mode===mode)return;r.mode=mode;if(mode==='independent'){s.start();}else{s.stop();}this.save();this.render();}
+  setMode(id,mode){const r=this.regions[id],s=this.sources[id];if(!r||!s||!['shared','native','independent',...GROUPS.map(g=>g.id)].includes(mode)||r.mode===mode)return;r.mode=mode;if(mode==='independent'){s.start();}else if(s.running){s.stop();}this.updateGroupSources();this.save();this.render();}
   getSettingsPanel(){
     const panel=document.createElement('div');panel.style.cssText='display:grid;gap:12px;padding:12px;color:var(--text-normal,#eee);';
     const el=(tag,text)=>{const e=document.createElement(tag);if(text)e.textContent=text;return e;};
@@ -187,11 +194,19 @@ module.exports=class BackgroundManager {
     const appearance=(p,obj,cb)=>{number(p,'暗化 (%)',obj,'dim',0,95,cb);number(p,'模糊 (px)',obj,'blur',0,20,cb);select(p,'縮放',[['cover','填滿（裁切）'],['contain','完整顯示'],['100% 100%','拉伸'],['auto','原始尺寸']],obj.fit,v=>{obj.fit=v;this.save();cb();});number(p,'水平位置 (%)',obj,'x',0,100,cb);number(p,'垂直位置 (%)',obj,'y',0,100,cb);};
     const sourcePanel=(p,src)=>{const a=src.s;const path=field(add(p,el('input')));path.type='text';path.placeholder='D:\\Coding\\Background';path.value=a.path;path.style.width='100%';const pick=add(p,el('input'));pick.type='file';pick.multiple=true;pick.setAttribute('webkitdirectory','');pick.style.display='none';pick.onchange=()=>{src.applyFiles(pick.files);pick.value='';};const bar=add(p,el('div'));bar.append(button('原生選取資料夾',()=>pick.click()),button('套用路徑',()=>src.applyPath(path.value)),button('下一張',()=>src.next()),button('重新掃描',()=>src.sync()),button('停止此背景',()=>{src.reset();src.setStatus('已停止');}));
       check(p,'包含子資料夾（重新套用後生效）',a,'recursive');check(p,'隨機輪播',a,'shuffle');check(p,'自動載入已儲存路徑',a,'auto');number(p,'輪播間隔（分鐘）',a,'minutes',1,1440,()=>{if(src.timer)src.schedule();});number(p,'轉場（ms）',a,'fade',0,5000,()=>src.appearance());appearance(p,a,()=>src.appearance());const st=add(p,el('div',src.status));st.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;padding:8px;border:1px solid currentColor;border-radius:4px;';src.refreshUI=()=>{st.textContent=src.status;};};
-    const section=(title,open=false)=>{const d=add(panel,el('details'));d.open=open;d.style.cssText='padding:10px;border:1px solid #7776;border-radius:6px;';add(d,el('summary',title));const body=add(d,el('div'));body.style.cssText='display:grid;gap:9px;padding-top:12px;';return body;};
-    add(panel,el('h3','BackgroundManager 3.1 — 分區背景'));add(panel,el('p','預設所有區域共用全視窗背景。原生色模式以不透明色遮住背景；獨立模式可選不同資料夾。建議先用原生資料夾選取，確認正常後再啟用自動載入。'));
+    const section=(title,open=false,parent=panel)=>{const d=add(parent,el('details'));d.open=open;d.style.cssText='padding:10px;border:1px solid #7776;border-radius:6px;';add(d,el('summary',title));const body=add(d,el('div'));body.style.cssText='display:grid;gap:9px;padding-top:12px;';return body;};
+    add(panel,el('h3','BackgroundManager 3.2 — 分區與同步群組'));
+    add(panel,el('p','全視窗共用維持原有連續背景；獨立模式使用各區自己的圖片。將任意區域設為同一同步群組（A～E），即共用圖片、輪播與轉場。各區可另外調整暗化、模糊、縮放及位置。'));
     const global=section('全視窗共用背景',true);sourcePanel(global,this.sources.shared);
-    for(const z of ZONES){const p=section(z.label),r=this.regions[z.id];const body=el('div');body.style.cssText='display:grid;gap:9px;';const draw=()=>{body.replaceChildren();if(r.mode==='shared'){check(body,'獨立調整共用背景的外觀',r,'override',()=>{draw();this.render();});if(r.override)appearance(body,r,()=>this.render());}else if(r.mode==='independent'){sourcePanel(body,this.sources[z.id]);}else add(body,el('p','以區域原生底色遮蔽背景圖片（不修改文字與圖示）。'));};select(p,'背景模式',[['shared','共用背景'],['native','原生色（無圖片）'],['independent','獨立背景及輪播']],r.mode,v=>{this.setMode(z.id,v);draw();});add(p,body);draw();}
-    add(panel,el('p','安全限制同 3.0：單張 12 MiB／2400 萬像素；路徑每分鐘掃描，最多 3000 個項目。每個獨立區域持有自己的圖片及計時器，建議先測試少量區域。'));
+    const groupBox=section('同步群組設定（A～E）',true);
+    add(groupBox,el('p','先在下方各區的「背景模式」選擇群組，再於此指定該群組的資料夾。未使用群組不會讀取圖片或執行輪播。'));
+    const groupViews={};
+    for(const g of GROUPS){const p=section(g.label,false,groupBox);const summary=add(p,el('div'));const body=add(p,el('div'));body.style.cssText='display:grid;gap:9px;';groupViews[g.id]={summary,body,active:null};}
+    const drawGroups=()=>{for(const g of GROUPS){const {summary,body}=groupViews[g.id],view=groupViews[g.id];const members=this.groupMembers(g.id);summary.textContent=members.length?'包含：'+members.map(z=>z.label).join('、'):'目前沒有區域加入';const active=members.length>0;if(view.active===active)continue;view.active=active;body.replaceChildren();if(active)sourcePanel(body,this.sources[g.id]);else add(body,el('p','請先將至少一個區域加入此群組。'));}};
+    const modeOptions=[['shared','全視窗共用背景'],['native','原生色（無圖片）'],['independent','獨立背景及輪播'],...GROUPS.map(g=>[g.id,g.label])];
+    for(const z of ZONES){const p=section(z.label),r=this.regions[z.id];const body=el('div');body.style.cssText='display:grid;gap:9px;';const draw=()=>{body.replaceChildren();if(r.mode==='shared'||isGroup(r.mode)){if(isGroup(r.mode))add(body,el('p','與同群組區域同步顯示圖片及輪播；圖片在本區域獨立取景。'));check(body,'獨立調整共用背景的外觀',r,'override',()=>{draw();this.render();});if(r.override)appearance(body,r,()=>this.render());}else if(r.mode==='independent'){sourcePanel(body,this.sources[z.id]);}else add(body,el('p','以區域原生底色遮蔽背景圖片（不修改文字與圖示）。'));};select(p,'背景模式',modeOptions,r.mode,v=>{this.setMode(z.id,v);draw();drawGroups();});add(p,body);draw();}
+    drawGroups();
+    add(panel,el('p','安全限制：單張 12 MiB／2400 萬像素；路徑每分鐘掃描，最多 3000 個項目。同群組共用一份圖片與一個輪播計時器。原生選取的資料夾在重啟後需要重新選取。'));
     return panel;
   }
 };
