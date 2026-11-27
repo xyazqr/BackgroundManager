@@ -5,6 +5,9 @@
 
 ## 功能
 
+- **3.1.0 分區背景**：伺服器列表、左側頻道／私訊列表、中央聊天區、右側成員列表與底部使用者控制列，可各自選擇共用背景、原生色或獨立資料夾。
+- 每個獨立區域可設定輪播、轉場、暗化、模糊、縮放及水平／垂直位置；共用模式預設維持全視窗連續背景，勾選獨立外觀後依區域重新取景。
+
 - 從本機資料夾選擇圖片，不使用 IndexedDB 儲存圖片。
 - 依序或隨機輪播，可調整間隔、淡入淡出、暗化、模糊。
 - 路徑模式支援每 60 秒重新掃描及選擇性自動啟動。
@@ -21,7 +24,16 @@
 
 不必安裝舊版插件、額外主題或預先建立 config；BetterDiscord 會在設定變更後儲存設定。請勿同時安裝另一個同名 BackgroundManager 插件。
 
-## 兩種模式
+## 分區背景使用方式
+
+1. 在「全視窗共用背景」選取原本的背景資料夾。更新會保留 3.0.0 儲存的路徑與外觀設定；使用原生選取模式時仍須重新選取。
+2. 展開左側頻道／私訊列表、右側成員列表或其他區域的設定。
+3. 選擇「共用背景」、「原生色（無圖片）」或「獨立背景及輪播」。共用模式可另外勾選「獨立調整共用背景的外觀」，設定暗化、模糊、縮放與位置；勾選後該區域重新取景，不再保證與全視窗圖片無縫對齊。
+4. 獨立模式下選擇該區域自己的資料夾，設定輪播與轉場等參數。原生選取資料夾不儲存檔案授權，重新啟動後須再選取。
+
+原生色模式使用啟用背景時取得的區域底色建立遮罩，並不是完整還原 Discord 原生主題。區域位置以可見 DOM 元素為準，每 500 ms 更新；Discord 更新 class 名稱、切換主題、特殊頁面或其他主題可能影響區域辨識。找不到區域時會隱藏其圖層。獨立來源按序解碼，但各區仍會保留當前圖片及轉場中的圖片，記憶體需求高於共用模式。設定檔無須手動修改。
+
+## 兩種圖片來源模式
 
 | 功能 | 原生選取資料夾 | 路徑模式 |
 | --- | --- | --- |
@@ -59,11 +71,11 @@
 npm test
 ```
 
-測試涵蓋語法、無設定檔啟動、路徑掃描、基本讀取、原生 File 清單及清理。GitHub Actions 在 push / pull request 時執行相同測試。Node 測試使用模擬 BetterDiscord API，不能取代 Windows Discord + BetterDiscord 的實機相容性驗證。3.0.0 尚未完成此實機驗證。
+測試涵蓋語法、無設定檔啟動、路徑掃描、基本讀取、原生 File 清單及清理。GitHub Actions 在 push / pull request 時執行相同測試。Node 測試使用模擬 BetterDiscord API，不能取代 Windows Discord + BetterDiscord 的實機相容性驗證。3.1.0 已在 Chromium 的模擬 Discord 欄位測試背景解碼、共用／獨立／原生色切換、區域尺寸、隱藏成員欄與停止清理；仍未在 Windows Discord + BetterDiscord 實機測試。另提供可選的 `python tests/browser_smoke.py`（需安裝 Python Playwright 與 Chromium；可用 `CHROMIUM_PATH` 指定執行檔）。
 
 ## English summary
 
-A standalone BetterDiscord wallpaper slideshow plugin with local folder selection, sequential/random rotation, fades, brightness and blur. Install only `BackgroundManager.plugin.js` into the BetterDiscord plugins folder. No existing config is required. Start with the native folder picker; saved path mode depends on BetterDiscord's filesystem compatibility layer. Actual Discord client compatibility has not yet been verified.
+A standalone BetterDiscord wallpaper slideshow plugin with local folder selection, sequential/random rotation, fades, brightness and blur. Install only `BackgroundManager.plugin.js` into the BetterDiscord plugins folder. No existing config is required. Start with the native folder picker; saved path mode depends on BetterDiscord's filesystem compatibility layer. Version 3.1 adds per-region shared/native-color/independent backgrounds and settings. Synthetic Chromium integration was tested; actual Discord client compatibility for this update has not yet been verified.
 
 ## 專案來源與授權
 

@@ -1,0 +1,17 @@
+from playwright.sync_api import sync_playwright
+from pathlib import Path
+import os, shutil
+s=(Path(__file__).resolve().parents[1] / 'BackgroundManager.plugin.js').read_text()
+with sync_playwright() as p:
+ b=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or shutil.which('chromium-browser'),args=['--no-sandbox']);page=b.new_page(viewport={'width':1000,'height':700});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+ page.set_content('''<style>body{margin:0}#app-mount{width:100vw;height:100vh;background:#111}.app_x{display:flex;height:100%;background:#222}.guilds_x{width:70px;background:#161616}.sidebarList_x{width:200px;background:#333;position:relative}.panels_x{position:absolute;bottom:0;width:100%;height:70px;background:#555}.chatContent_x{flex:1;background:#444}.membersWrap_x{width:180px;background:#666}</style><div id="app-mount"><div class="app_x theme-dark"><div class="guilds_x"></div><div class="sidebarList_x"><div class="panels_x"></div></div><div class="chatContent_x"></div><div class="membersWrap_x"></div></div></div>''')
+ page.evaluate('window.module={exports:{}};window.BdApi={Data:{load:()=>undefined,save:()=>{}}};');page.add_script_tag(content=s)
+ page.evaluate('''async()=>{window.plugin=new module.exports();plugin.start();window.file=async(color,name)=>{const c=document.createElement('canvas');c.width=8;c.height=8;const x=c.getContext('2d');x.fillStyle=color;x.fillRect(0,0,8,8);return new File([await new Promise(r=>c.toBlob(r))],name,{type:'image/png'});};plugin.shared.fade=0;plugin.sources.shared.applyFiles([await file('red','red.png')]);}''')
+ page.wait_for_function('plugin.sources.shared.index>=0');page.wait_for_timeout(150)
+ assert page.evaluate('plugin.root.isConnected && plugin.sources.shared.root.getBoundingClientRect().width===1000')
+ page.evaluate('''async()=>{plugin.setMode('channels','native');plugin.setMode('members','independent');plugin.regions.members.source.fade=0;plugin.sources.members.applyFiles([await file('blue','blue.png')]);plugin.regions.chat.override=true;plugin.regions.chat.dim=20;plugin.render();}''')
+ page.wait_for_function('plugin.sources.members.index>=0');page.wait_for_timeout(200)
+ result=page.evaluate('''()=>({left:plugin.overlays.channels.getBoundingClientRect().width,right:plugin.sources.members.root.getBoundingClientRect().width,chat:plugin.overlays.chat.getBoundingClientRect().width,dim:plugin.overlays.chat.style.getPropertyValue('--bgm-bright'),native:plugin.overlays.channels.style.backgroundImage,rightSource:plugin.sources.members.current.name,sharedSource:plugin.sources.shared.current.name})''');print(result);assert result['left']==200 and result['right']==180 and result['chat']==550 and result['dim']=='0.8' and result['rightSource']=='blue.png' and result['sharedSource']=='red.png';assert result['native']!='none'
+ page.evaluate('''()=>{document.querySelector('.membersWrap_x').style.display='none';}''');page.wait_for_timeout(650);assert page.evaluate('plugin.sources.members.root.style.display')=='none'
+ page.evaluate('''()=>{document.querySelector('.membersWrap_x').style.display='block';plugin.setMode('members','shared');}''');assert page.evaluate('!plugin.sources.members.root && !plugin.sources.members.running')
+ page.evaluate('''()=>{document.body.append(plugin.getSettingsPanel());plugin.stop();}''');assert page.evaluate('!document.querySelector("#bgm-local-v3") && !document.querySelector("[data-bgm-zone]")');assert not errors,errors;print('Chromium browser integration passed');b.close()
