@@ -1,46 +1,25 @@
-# Changelog
+# Changelog / 版本更新紀錄
 
-## 3.4.0
+## [1.0.0]
 
-- 新增互斥的全視窗／分區模式；全視窗只使用單一來源，分區只在指定區域呈現背景，不再以共用圖當底圖。
-- 強化伺服器列表選擇器及內部捲動層透明度，並調整重疊區域的圖層順序。
-- 新增右上角背景設定捷徑，直接開啟設定視窗；停用插件時清除。
-- 使用 MutationObserver、ResizeObserver 及 500 ms 備援檢查更新版面，新增區域辨識診斷。
-- 未使用的來源停止輪播並釋放 Blob URL；全域模式切換保留設定及本次工作階段的已選檔案清單。
-- 分區共用背景使用同一畫布；各區可覆寫暗化與模糊，不再單獨縮放或定位共用圖片。
-- 尚未在 Windows Discord + BetterDiscord 實機驗證。
+Initial release / 首次正式版本
 
-## 3.3.0
+### English
 
-- 同步群組改用共同畫布，以可見區域外接矩形統一縮放及定位，各區裁切對應部分，保留實際間距。
-- 群組內各區可覆寫暗化與模糊，但縮放及位置統一由群組控制。
-- 保存並顯示已選資料夾名稱或已套用路徑，移除輸入欄位 placeholder；原生選取在重啟後仍需重新授權。
-- 五個區域的收合標題右側顯示當前背景模式。
-- 7 項群組單元測試及 Chromium 模擬介面整合測試通過；尚未進行 Discord 實機測試。
+- Local folder wallpaper slideshows with native folder selection and saved path mode.
+- Full-window and regional display modes, with five configurable interface regions.
+- Shared, native-color, independent, and A–E synchronization group backgrounds.
+- Synchronized group canvases, regional dimming and blur overrides, and source-level framing.
+- Sequential and random playback, adjustable intervals, crossfades, manual switching, and periodic path rescanning.
+- Quick settings shortcut, region detection, and automatic cleanup of inactive image resources.
+- English and Traditional Chinese documentation.
 
-## 3.2.0
+### 繁體中文
 
-- 新增 A～E 五個同步群組，可將五個既有區域任意分配至群組。
-- 同群組共用圖片、輪播計時器及轉場；各區域仍可獨立調整取景及外觀。
-- 保留全視窗共用、原生底色與獨立背景模式，以及 3.0／3.1 的設定資料。
-- 群組設定保存至 `groupsV32`；最後一個區域退出群組時停止輪播並清理圖片資源。
-- 新增 Node.js 群組測試與 Chromium 模擬欄位整合測試。尚未在 Windows Discord + BetterDiscord 實機驗證。
-
-## 3.1.0
-
-- 新增五區域背景控制：共用、原生底色遮罩、獨立資料夾與輪播。
-- 新增各區暗化、模糊、縮放、水平與垂直位置設定。
-- 保留 3.0 設定及原有圖片讀取流程；獨立來源使用序列化解碼，降低同時解碼的負擔。
-- 新增分區設定、切換生命週期與 Chromium 模擬欄位測試。
-- 已知限制：原生色為底色遮罩，並非完整還原原生主題；Discord 實機 DOM 相容性尚未確認。
-
-## 3.0.0
-
-- 獨立重寫資料夾背景輪播插件。
-- 新增原生資料夾選取及保存路徑模式。
-- 支援輪播、轉場、暗化、模糊及手動切換。
-- 預設關閉自動啟動；單次讀取限制與解碼錯誤停止輪播。
-- 移除舊版 IndexedDB 和 Discord 內部模組依賴。
-- 新增 GitHub 專案文件、原創圖示、Node 測試與 CI。
-
-實機相容性：尚未驗證 Windows Discord + BetterDiscord。
+- 本機資料夾背景輪播，支援原生選取及已儲存路徑。
+- 全視窗與分區顯示模式，提供五個介面區域的背景設定。
+- 共用背景、原生色、獨立背景及 A～E 同步群組。
+- 群組共同畫布、區域暗化及模糊覆寫，以及來源統一取景。
+- 依序或隨機輪播、自訂間隔、轉場、手動切換與路徑定期掃描。
+- 快速設定入口、區域辨識及閒置圖片資源清理。
+- 提供英文與繁體中文專案文件。

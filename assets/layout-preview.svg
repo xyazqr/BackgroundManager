@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 430" role="img" aria-labelledby="title desc">
+<title id="title">BackgroundManager display modes</title><desc id="desc">Schematic of one continuous full-window background and regional wallpapers assigned to two groups and one independent source.</desc>
+<defs>
+  <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#363865"/><stop offset="1" stop-color="#b77d85"/></linearGradient>
+  <linearGradient id="blue" x2="0" y2="1"><stop stop-color="#263e63"/><stop offset="1" stop-color="#7393a7"/></linearGradient>
+  <linearGradient id="amber" x2="0" y2="1"><stop stop-color="#563b54"/><stop offset="1" stop-color="#ad7665"/></linearGradient>
+  <clipPath id="left"><rect x="26" y="83" width="438" height="285" rx="10"/></clipPath>
+  <clipPath id="right"><rect x="496" y="83" width="438" height="285" rx="10"/></clipPath>
+  <pattern id="lines" width="24" height="26" patternUnits="userSpaceOnUse"><rect x="0" y="8" width="20" height="4" rx="2" fill="#fff" opacity=".12"/></pattern>
+</defs>
+<rect width="960" height="430" rx="16" fill="#171a24"/>
+<g fill="#f1f3fa" font-family="Arial, sans-serif">
+  <text x="26" y="39" font-size="23" font-weight="bold">Full-window</text>
+  <text x="496" y="39" font-size="23" font-weight="bold">Regional</text>
+  <text x="26" y="62" font-size="14" fill="#aeb6ca">One source across the entire interface</text>
+  <text x="496" y="62" font-size="14" fill="#aeb6ca">Two groups and one independent source</text>
+</g>
+<g clip-path="url(#left)">
+  <rect x="26" y="83" width="438" height="285" fill="url(#sky)"/>
+  <circle cx="338" cy="152" r="31" fill="#f4ca9c" opacity=".85"/>
+  <path d="M26 306L102 200 163 263 233 172 315 273 389 210 464 282V368H26Z" fill="#3b405d"/>
+  <path d="M26 334L129 260 213 315 321 245 464 318V368H26Z" fill="#222d45"/>
+  <path d="M26 83H464V112H26ZM26 112H70V368H26ZM70 112H173V338H70ZM385 112H464V368H385ZM70 338H173V368H70Z" fill="#101321" opacity=".34"/>
+  <g stroke="#dce3ff" stroke-opacity=".24" fill="none"><path d="M70 112V368M173 112V368M385 112V368M26 112H464M70 338H173"/></g>
+  <g fill="#fff" opacity=".52"><circle cx="48" cy="133" r="10"/><circle cx="48" cy="161" r="10"/><circle cx="48" cy="189" r="10"/><circle cx="48" cy="217" r="10"/></g>
+  <rect x="82" y="125" width="77" height="196" fill="url(#lines)"/><rect x="398" y="125" width="54" height="215" fill="url(#lines)"/>
+  <g fill="#e9eaf5" opacity=".62"><rect x="192" y="144" width="95" height="5" rx="2"/><rect x="192" y="157" width="150" height="4" rx="2"/><rect x="192" y="202" width="81" height="5" rx="2"/><rect x="192" y="215" width="135" height="4" rx="2"/><rect x="192" y="260" width="110" height="5" rx="2"/></g>
+  <rect x="189" y="334" width="181" height="21" rx="6" fill="#161b2a" opacity=".66"/>
+</g>
+<g clip-path="url(#right)">
+  <rect x="496" y="83" width="438" height="285" fill="#242a3a"/>
+  <path d="M496 112H540V368H496ZM540 338H643V368H540Z" fill="url(#amber)"/>
+  <path d="M540 112H643V338H540ZM855 112H934V368H855Z" fill="url(#blue)"/>
+  <rect x="643" y="112" width="212" height="256" fill="#493958"/>
+  <path d="M643 308L702 236 750 282 803 206 855 288V368H643Z" fill="#252d47"/>
+  <path d="M540 270L588 205 643 251V338H540ZM855 259L899 196 934 226V368H855Z" fill="#344d66"/>
+  <rect x="496" y="83" width="438" height="29" fill="#202535"/>
+  <g fill="#fff" opacity=".5"><circle cx="518" cy="133" r="10"/><circle cx="518" cy="161" r="10"/><circle cx="518" cy="189" r="10"/><circle cx="518" cy="217" r="10"/></g>
+  <rect x="552" y="126" width="79" height="105" fill="url(#lines)"/><rect x="866" y="126" width="57" height="105" fill="url(#lines)"/>
+  <g stroke="#dce3ff" stroke-opacity=".28" fill="none"><path d="M540 112V368M643 112V368M855 112V368M496 112H934M540 338H643"/></g>
+  <g font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#fff" text-anchor="middle">
+    <rect x="503" y="304" width="30" height="22" rx="5" fill="#7a4651"/><text x="518" y="319">B</text>
+    <rect x="560" y="270" width="63" height="23" rx="5" fill="#294766"/><text x="591" y="286">Group A</text>
+    <rect x="692" y="270" width="114" height="23" rx="5" fill="#554066"/><text x="749" y="286">Independent</text>
+    <rect x="865" y="270" width="60" height="23" rx="5" fill="#294766"/><text x="895" y="286">Group A</text>
+    <rect x="560" y="342" width="63" height="20" rx="5" fill="#7a4651"/><text x="591" y="356">Group B</text>
+  </g>
+  <rect x="659" y="334" width="181" height="21" rx="6" fill="#161b2a" opacity=".66"/>
+</g>
+<g fill="none" stroke="#566079" stroke-width="1"><rect x="26" y="83" width="438" height="285" rx="10"/><rect x="496" y="83" width="438" height="285" rx="10"/></g>
+<text x="480" y="404" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#aeb6ca">Layout illustration · 配置示意</text>
+</svg>

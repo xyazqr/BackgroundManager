@@ -1,9 +1,13 @@
 {
   "name": "backgroundmanager-local",
-  "version": "3.4.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "Standalone local-folder wallpaper slideshow plugin for BetterDiscord",
+  "description": "Local wallpaper slideshow and regional background manager for BetterDiscord",
   "main": "BackgroundManager.plugin.js",
-  "scripts": {"test": "node --check BackgroundManager.plugin.js && node --test tests/*.test.js"},
-  "engines": {"node": ">=22"}
+  "scripts": {
+    "test": "node --check BackgroundManager.plugin.js && node --test tests/*.test.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
 }
