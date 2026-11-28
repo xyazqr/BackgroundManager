@@ -2,7 +2,7 @@
  * @name BackgroundManager
  * @author Local rewrite
  * @description 本機資料夾背景輪播、獨立區域與自訂同步群組（不修改 Discord 內部模組）。
- * @version 3.4.0
+ * @version 1.0.0
  */
 class WallpaperSource {
   constructor(owner, zone) {
@@ -205,7 +205,7 @@ module.exports=class BackgroundManager {
     const sourcePanel=(p,src)=>{const a=src.s;const path=field(add(p,el('input')));path.type='text';path.value=a.selection==='picker'?'':a.path;path.setAttribute('aria-label','資料夾路徑');path.style.cssText+=';width:100%;box-sizing:border-box;';const folder=add(p,el('div'));folder.style.cssText='overflow-wrap:anywhere;font-size:13px;';const showFolder=()=>{folder.textContent=a.selection==='picker'?`已選資料夾：${a.pickerFolder||'未知'}${src.mode==='picker'&&!src.files.length?'（需重新選取）':''}`:`已設定資料夾：${a.path||'尚未選取'}`;folder.title=folder.textContent;};showFolder();const pick=add(p,el('input'));pick.type='file';pick.multiple=true;pick.setAttribute('webkitdirectory','');pick.style.display='none';pick.onchange=()=>{src.applyFiles(pick.files);if(a.selection==='picker')path.value='';showFolder();pick.value='';};const bar=add(p,el('div'));bar.append(button('原生選取資料夾',()=>pick.click()),button('套用路徑',()=>{src.applyPath(path.value);path.value=a.path;showFolder();}),button('下一張',()=>src.next()),button('重新掃描',()=>src.sync()),button('停止此背景',()=>{src.reset();src.setStatus('已停止');}));
       check(p,'包含子資料夾（重新套用後生效）',a,'recursive');check(p,'隨機輪播',a,'shuffle');check(p,'自動載入已儲存路徑',a,'auto');number(p,'輪播間隔（分鐘）',a,'minutes',1,1440,()=>{if(src.timer)src.schedule();});number(p,'轉場（ms）',a,'fade',0,5000,()=>src.appearance());appearance(p,a,()=>src.appearance());const st=add(p,el('div',src.status));st.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;padding:8px;border:1px solid currentColor;border-radius:4px;';src.refreshUI=()=>{st.textContent=src.status;showFolder();};};
     const section=(title,open=false,parent=panel,modeLabel=null)=>{const d=add(parent,el('details'));d.open=open;d.style.cssText='padding:10px;border:1px solid #7776;border-radius:6px;';const heading=add(d,el('summary',title));if(modeLabel!==null){const badge=add(heading,el('span',modeLabel));badge.dataset.bgmModeLabel='';badge.style.cssText='float:right;margin-left:8px;font-size:12px;font-weight:400;color:var(--text-muted,#b5bac1);';}const body=add(d,el('div'));body.style.cssText='display:grid;gap:9px;padding-top:12px;';return body;};
-    add(panel,el('h3','BackgroundManager 3.4 — 全視窗與分區背景'));
+    add(panel,el('h3','BackgroundManager 1.0.0 — 全視窗與分區背景'));
     select(panel,'全域顯示模式',[['full','全視窗模式'],['regional','分區模式']],this.displayMode,v=>{this.setDisplayMode(v);redraw();});
     if(this.displayMode==='full'){add(panel,el('p','所有區域統一使用全視窗背景；分區設定暫停並保留。'));sourcePanel(section('全視窗背景設定',true),this.sources.shared);return panel;}
     add(panel,el('p','分區模式：共用背景只顯示在選擇共用的區域，不再作為其他區域的底圖；獨立模式使用各區自己的圖片。將任意區域設為同一同步群組（A～E），即共用圖片、輪播與轉場。同群組跨區域無縫取景；縮放與位置由群組統一控制。'));

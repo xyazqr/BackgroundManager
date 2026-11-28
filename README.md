@@ -1,87 +1,139 @@
-<p align="center"><img src="assets/icon.png" width="120" alt="BackgroundManager icon"></p>
+<p align="center">
+  <img src="assets/icon.png" alt="BackgroundManager icon" width="112">
+</p>
 
 <h1 align="center">BackgroundManager</h1>
-<p align="center">BetterDiscord 本機資料夾背景輪播插件 · Local-folder wallpaper slideshow</p>
 
-## 功能
+<p align="center">A local wallpaper slideshow and regional background manager for BetterDiscord.</p>
 
-- **3.1.0 分區背景**：伺服器列表、左側頻道／私訊列表、中央聊天區、右側成員列表與底部使用者控制列，可各自選擇共用背景、原生色或獨立資料夾。
-- 每個獨立區域可設定輪播、轉場、暗化、模糊、縮放及水平／垂直位置；共用模式預設維持全視窗連續背景，勾選獨立外觀後依區域重新取景。
+<p align="center">
+  <img src="https://img.shields.io/badge/version-1.0.0-5865F2" alt="Version 1.0.0">
+  <img src="https://img.shields.io/badge/platform-BetterDiscord-3E82E5" alt="BetterDiscord">
+</p>
 
-- 從本機資料夾選擇圖片，不使用 IndexedDB 儲存圖片。
-- 依序或隨機輪播，可調整間隔、淡入淡出、暗化、模糊。
-- 路徑模式支援每 60 秒重新掃描及選擇性自動啟動。
-- 使用獨立 CSS 背景層，不修改 Discord 核心檔案，也不依賴 Discord 內部 React 模組。
-- 圖片載入失敗會停止自動輪播，設定中顯示錯誤；可手動切換下一張。
+<p align="center"><a href="README.md">English</a> · <a href="README.zh-TW.md">繁體中文</a></p>
 
-## 安裝
+## Overview
 
-1. 安裝 [BetterDiscord](https://betterdiscord.app/) 並啟動 Discord。
-2. 下載本專案根目錄的 `BackgroundManager.plugin.js`（在 GitHub 點選 Raw 或 Download raw file），或從 Release 取得該檔案。
-3. 在 Discord 使用者設定 → BetterDiscord → Plugins → Open Plugins Folder 開啟插件資料夾。Windows 預設為 `%appdata%\BetterDiscord\plugins`。
-4. 將 `BackgroundManager.plugin.js` 放入資料夾，啟用插件並開啟齒輪設定。
-5. 建議先點「原生選取資料夾（建議）」並選擇圖片資料夾。確認背景可正常顯示後，再使用路徑模式與自動啟動。
+BackgroundManager customizes the Discord desktop client with images from local folders. Use a single wallpaper across the entire window, or assign separate backgrounds to different parts of the interface. Images can rotate automatically without importing them into an image database.
 
-不必安裝舊版插件、額外主題或預先建立 config；BetterDiscord 會在設定變更後儲存設定。請勿同時安裝另一個同名 BackgroundManager 插件。
+![Full-window and regional background layout illustration](assets/layout-preview.svg)
 
-## 分區背景使用方式
+*Layout illustration: full-window wallpaper and an example regional configuration. This is a schematic, not a Discord screenshot.*
 
-1. 在「全視窗共用背景」選取原本的背景資料夾。更新會保留 3.0.0 儲存的路徑與外觀設定；使用原生選取模式時仍須重新選取。
-2. 展開左側頻道／私訊列表、右側成員列表或其他區域的設定。
-3. 選擇「共用背景」、「原生色（無圖片）」或「獨立背景及輪播」。共用模式可另外勾選「獨立調整共用背景的外觀」，設定暗化、模糊、縮放與位置；勾選後該區域重新取景，不再保證與全視窗圖片無縫對齊。
-4. 獨立模式下選擇該區域自己的資料夾，設定輪播與轉場等參數。原生選取資料夾不儲存檔案授權，重新啟動後須再選取。
+## Features
 
-原生色模式使用啟用背景時取得的區域底色建立遮罩，並不是完整還原 Discord 原生主題。區域位置以可見 DOM 元素為準，每 500 ms 更新；Discord 更新 class 名稱、切換主題、特殊頁面或其他主題可能影響區域辨識。找不到區域時會隱藏其圖層。獨立來源按序解碼，但各區仍會保留當前圖片及轉場中的圖片，記憶體需求高於共用模式。設定檔無須手動修改。
+- Full-window and regional display modes.
+- Five configurable regions: server list, channel/direct message list, chat area, member list, and user controls.
+- Shared backgrounds, independent slideshows, native-color masks, and five synchronization groups (A–E).
+- Sequential or random rotation, adjustable intervals, crossfades, and manual switching.
+- Brightness (dimming), blur, scaling, and horizontal/vertical positioning.
+- Native folder selection or saved directory paths, with optional automatic loading and periodic rescanning in path mode.
+- Quick access to settings from the Discord toolbar.
 
-## 兩種圖片來源模式
+## Installation
 
-| 功能 | 原生選取資料夾 | 路徑模式 |
-| --- | --- | --- |
-| 讀取 | Chromium File API | BetterDiscord fs 相容層 |
-| 重新啟動後 | 需重新選取 | 可儲存路徑並自動啟動 |
-| 自動更新檔案清單 | 需重新選取 | 每 60 秒掃描（正常輪播期間） |
-| 建議用途 | 初次測試、相容性較佳的備用方案 | 已確認路徑讀取正常後使用 |
+1. Install [BetterDiscord](https://betterdiscord.app/) for the Discord desktop client.
+2. Download [BackgroundManager.plugin.js](https://raw.githubusercontent.com/xyazqr/BackgroundManager/main/BackgroundManager.plugin.js). If you are viewing a development branch, download the plugin from that branch's file listing instead.
+3. Open Discord **User Settings → BetterDiscord → Plugins → Open Plugins Folder**.
+4. Move `BackgroundManager.plugin.js` into the folder and enable it in the plugin list.
+5. Open its settings using the gear icon or the image button near the upper-right corner of Discord.
 
-## 設定
+On Windows, the plugin folder is normally `%appdata%\BetterDiscord\plugins`. No npm installation, separate theme, or pre-existing configuration is required. Remove or disable any other plugin with the same name before enabling this one.
 
-| 項目 | 初始值 |
+## Quick start
+
+1. Under **全域顯示模式** (Display mode), choose **全視窗模式** (Full-window mode).
+2. Expand **全視窗背景設定** (Full-window background settings).
+3. Click **原生選取資料夾** (Native folder picker) and select a folder containing images.
+4. Adjust dimming, blur, scaling, and the slideshow interval to suit your interface.
+5. To configure different backgrounds, switch to **分區模式** (Regional mode) and assign a mode to each region.
+
+The settings interface currently uses Traditional Chinese labels.
+
+### Regional backgrounds
+
+| Mode | Behavior |
 | --- | --- |
-| 資料夾路徑 | 空白 |
-| 包含子資料夾 | 關閉 |
-| 隨機輪播 | 開啟 |
-| 自動啟動 | 關閉 |
-| 輪播間隔 | 10 分鐘 |
-| 轉場時間 | 1000 ms |
-| 暗化 | 50% |
-| 模糊 | 0 px |
+| Shared | Uses the common wallpaper in continuous full-window coordinates, only in regions assigned to it. |
+| Native color | Covers the region with its detected base color; not a complete restoration of the native theme. |
+| Independent | Uses a separate image folder, slideshow, and appearance settings. |
+| Synchronization group A–E | Shares one source, slideshow, and canvas among all visible regions in that group. |
 
-支援 PNG、JPG/JPEG、WEBP、GIF、BMP、AVIF、JFIF（實際解碼能力取決於 Discord 的 Chromium）。單張上限為 12 MiB，解碼後檢查 2400 萬像素。路徑掃描最多 3000 個項目、100 個資料夾、8 層深度。這些限制不是絕對的記憶體安全保證；GIF 解碼仍可能有額外負擔。路徑模式使用同步 fs API，大型資料夾可能短暫阻塞介面。
+For example, assign the channel and member lists to Group A, the server list and user controls to Group B, and the chat area to Independent. Configure the folders under the corresponding group or region settings. For shared and group backgrounds, local overrides affect only dimming and blur; scaling and positioning are controlled by the source.
 
-## 排除問題
+See [Regional backgrounds and synchronization groups](GROUPS.md#english) for additional examples.
 
-- **無背景：** 先用原生模式選取小型 PNG/JPG；查看設定最下方的狀態訊息。若圖片已載入但不可見，可能是 Discord CSS 更新或其他 Theme 造成遮蔽。
-- **路徑模式讀取失敗：** 使用原生模式；BetterDiscord 的 fs 相容層可能與 Node.js 不同。
-- **Discord 崩潰：** 在崩潰提示選 Open Plugins Folder，將此 JS 移出，重新啟動 Discord。不要反覆啟用有問題的版本。
+### Image sources
 
-## 開發與測試
+| | Native folder picker | Saved directory path |
+| --- | --- | --- |
+| Setup | Choose a local folder | Enter a path and click Apply path |
+| After restart | Select the folder again | Saved path can load automatically if enabled |
+| Folder changes | Select again | Rescans every 60 seconds during normal playback |
+| Best for | First-time setup | Persistent wallpaper folders |
 
-需要 Node.js 22（測試環境）。無 npm 依賴：
+Both modes read local images. Enable recursive scanning before selecting or reapplying a folder if you want to include subfolders.
+
+## Configuration
+
+| Setting | Default | Range / options |
+| --- | --- | --- |
+| Display mode | Regional | Full-window / Regional |
+| Regional assignment | Shared | Shared / Native / Independent / A–E |
+| Include subfolders | Off | On / Off |
+| Random rotation | On | On / Off |
+| Automatic path loading | Off | On / Off |
+| Slideshow interval | 10 min | 1–1,440 min |
+| Crossfade | 1,000 ms | 0–5,000 ms |
+| Dimming | 50% | 0–95% |
+| Blur | 0 px | 0–20 px |
+| Scaling | Cover | Cover / Contain / Stretch / Original size |
+| Horizontal / vertical position | 50% / 50% | 0–100% |
+
+Supported extensions: PNG, JPG, JPEG, WEBP, GIF, BMP, AVIF, and JFIF. Actual decoding depends on the Discord client's Chromium version. Each image is limited to 12 MiB and 24 megapixels. Path scanning is limited to 3,000 entries, 100 directories, and eight levels of subdirectories.
+
+## Troubleshooting
+
+- **No wallpaper:** select a small PNG or JPEG using the native folder picker and check the source status.
+- **Path cannot be read:** check the folder path and permissions, or switch to the native picker.
+- **A region is missing or covered:** use **區域辨識診斷** (Region detection) in regional settings and check whether another theme overrides the background. Hidden regions are not drawn.
+- **Slideshow stops:** if an image cannot be decoded, automatic rotation pauses. Use **下一張** (Next image) to continue or remove the problematic image.
+- **Discord fails to start:** remove the plugin from the BetterDiscord plugins folder and restart Discord.
+
+Discord interface updates and third-party themes can affect CSS-based region detection. Large folders and animated images may also increase resource usage.
+
+## Development
+
+Node.js 22 or later is required for the development checks. The plugin has no npm dependencies.
 
 ```sh
+git clone https://github.com/xyazqr/BackgroundManager.git
+cd BackgroundManager
 npm test
 ```
 
-測試涵蓋語法、無設定檔啟動、路徑掃描、基本讀取、原生 File 清單及清理。GitHub Actions 在 push / pull request 時執行相同測試。Node 測試使用模擬 BetterDiscord API，不能取代 Windows Discord + BetterDiscord 的實機相容性驗證。3.1.0 已在 Chromium 的模擬 Discord 欄位測試背景解碼、共用／獨立／原生色切換、區域尺寸、隱藏成員欄與停止清理；仍未在 Windows Discord + BetterDiscord 實機測試。另提供可選的 `python tests/browser_smoke.py`（需安裝 Python Playwright 與 Chromium；可用 `CHROMIUM_PATH` 指定執行檔）。
+Optional browser integration scripts use Python and Playwright:
 
-## English summary
+```sh
+python -m pip install playwright
+python -m playwright install chromium
+python tests/browser_smoke.py
+python tests/browser_groups.py
+```
 
-A standalone BetterDiscord wallpaper slideshow plugin with local folder selection, sequential/random rotation, fades, brightness and blur. Install only `BackgroundManager.plugin.js` into the BetterDiscord plugins folder. No existing config is required. Start with the native folder picker; saved path mode depends on BetterDiscord's filesystem compatibility layer. Version 3.1 adds per-region shared/native-color/independent backgrounds and settings. Synthetic Chromium integration was tested; actual Discord client compatibility for this update has not yet been verified.
+Set `CHROMIUM_PATH` if you need to use a specific Chromium executable.
 
-## 專案來源與授權
+## Resources
 
-本專案是獨立重寫的版本，並非 [Narukami 的 BackgroundManager](https://github.com/Naru-kami/BackgroundManager-plugin) 官方版本，也沒有與 Discord 或 BetterDiscord 官方合作。名稱沿用以便替換舊插件。圖示為本專案自製的 SVG，不使用 Discord 官方標誌。
+- [Traditional Chinese README](README.zh-TW.md)
+- [Regional background guide](GROUPS.md#english)
+- [Changelog](CHANGELOG.md)
+- [Report an issue](https://github.com/xyazqr/BackgroundManager/issues)
+- [BetterDiscord documentation](https://docs.betterdiscord.app/)
 
-授權尚未由維護者選定；公開發布前請確認有權公開所有檔案並選擇適當的授權。沒有 LICENSE 不代表已授權他人任意重製或散布。
+## Credits and license
 
-- [BetterDiscord 開發文件](https://docs.betterdiscord.app/)
-- [CHANGELOG](CHANGELOG.md)
+BackgroundManager is an independent rewrite, not an official version of [Narukami's BackgroundManager](https://github.com/Naru-kami/BackgroundManager-plugin). It is not affiliated with Discord or BetterDiscord. The project icon is original artwork.
+
+No open-source license has been specified for this repository.

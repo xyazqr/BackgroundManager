@@ -1,36 +1,75 @@
-# BackgroundManager 3.4.0 全視窗與分區背景
+# Regional backgrounds / 分區背景
 
-## 使用方式
+[English](#english) · [繁體中文](#繁體中文) · [README](README.md)
 
-1. 停用原有插件，備份並以新版 `BackgroundManager.plugin.js` 覆蓋 BetterDiscord plugins 資料夾中的同名檔案；再啟用插件。
-2. 點擊 Discord 右上角的圖片圖示（或原插件齒輪設定），先選擇全域顯示模式。全視窗模式暫停所有分區來源，僅使用單一完整背景；切回分區模式保留原設定。若選分區模式，展開需要同步的區域，將「背景模式」設為同一群組，例如「同步群組 A」。
-3. 展開「同步群組設定（A～E）」中的群組 A，使用原生選取資料夾或套用路徑。可設定間隔、轉場、暗化、模糊、取景等。
-4. 其他區域可選不同群組、獨立背景及輪播、全視窗共用背景或原生色。群組的縮放與水平／垂直位置統一設定；區域可獨立調整暗化及模糊，或改用獨立背景以個別取景。
+## English
 
-例：頻道列表與成員列表設為 A，中央聊天區設為獨立，伺服器列表與底部使用者控制列設為 B。群組 A 的下一張只影響頻道和成員列表；B 與聊天區不受影響。
+### Display modes
 
-- 同群組以所有可見成員區域的最小外接矩形為共同畫布，各區裁出對應的畫面。若中間隔著其他群組，該間距仍保留在共同畫布座標中。隱藏或調整欄位尺寸後會重新計算範圍。分區模式的共用背景亦維持全視窗座標，但只在選擇共用背景的區域顯示，不作為其他區域底圖。
-- 群組至少需要一個區域加入才能選擇資料夾或開始輪播。最後一區退出會停止來源並清除當前圖片、計時器；群組設定仍保留。重新加入時若使用路徑模式、已開啟自動載入且有保存路徑，會重新載入，否則需手動套用或選取。
-- 原生選取資料夾會保存資料夾名稱並常駐顯示，但檔案權限不跨重啟保存；重啟後須重新選取。路徑模式則顯示已套用的完整路徑，並支援自動載入。五個區域的收合標題右側即時顯示目前模式。
-- 舊共用與獨立模式設定不會被移除。原生色仍是底色遮罩。
+**Full-window:** One source covers the entire window. Regional sources are paused while their configuration is retained.
 
-## 測試
+**Regional:** Each of the five regions can use Shared, Native color, Independent, or one of Groups A–E. The common wallpaper is not drawn underneath other regions.
 
-在原專案根目錄覆蓋同名檔案、新增 `tests/groups.test.js` 與 `tests/browser_groups.py`，保留既有測試及其他未修改檔案。
+![Example layout](assets/layout-preview.svg)
 
-```sh
-npm test
-python tests/browser_groups.py
-```
+### Synchronization groups
 
-瀏覽器測試須安裝 Python Playwright 與 Chromium，可使用 `CHROMIUM_PATH` 指定執行檔。Node.js 22 與模擬 Discord DOM 的 Chromium 測試已通過；仍需 Windows Discord + BetterDiscord 實機確認。
+1. Select Regional mode (分區模式) in the settings.
+2. Expand each desired region and assign the same group under Background mode (背景模式), for example Group A.
+3. Expand Synchronization group settings (同步群組設定（A～E）), open Group A, and select a folder or apply a directory path.
+4. Adjust the group's rotation, fade, scaling, and position. Repeat for other groups as needed.
 
-基於 GitHub `xyazqr/BackgroundManager` main 的 3.1.0 版本，插件原始 blob SHA：`2701bc1e7ad1f6e94c248f20dc2fd6e21e550e67`。
+| Region | Example assignment |
+| --- | --- |
+| Server list | Group B |
+| Channel / DM list | Group A |
+| Chat area | Independent |
+| Member list | Group A |
+| User controls | Group B |
 
-## 3.4.0 注意事項
+Group A and Group B rotate independently; the chat area's source has its own timer. A group uses the smallest rectangle enclosing its visible members as a shared canvas. Each member shows the corresponding cropped portion, preserving gaps between non-adjacent members.
 
-- 更新後預設為分區模式，保留既有群組指派；可自行切換全視窗模式。全視窗與分區的共用來源沿用同一份設定。
-- 切換全域模式時會停止不使用的來源、釋放圖片 URL；已載入的檔案清單在同一次插件執行期間保留，恢復時重新解碼與輪播，未必從同一張開始。重啟後原生選取仍需重新授權。
-- 分區共用及群組模式的局部覆寫僅限暗化與模糊，縮放及位置統一由來源設定；舊的局部縮放／位置值保留但不套用。
-- 快速設定圖示優先放入右上方工具列，未找到時固定於右上方（避開視窗控制鈕）。實際位置取決於 Discord 版本與主題。
-- 分區設定中的「區域辨識診斷」可重新檢查五個區域。Discord 更新後仍可能需要調整 DOM 選擇器，請在實機確認。
+### Appearance and source behavior
+
+- Shared backgrounds use full-window coordinates. Groups use their own shared canvas.
+- Shared and group regions can override dimming and blur only. Scaling and position belong to the source. Use Independent mode for region-specific framing.
+- A group needs at least one assigned region before its source can be configured. Removing the last member stops playback and releases active image resources while preserving settings.
+- Changing the global display mode retains the settings and temporarily suspended file lists within the current plugin session. Resumed playback may start from a different image.
+- Native folder selection retains the folder name, not access permission, after a restart. Saved paths can be loaded automatically if the option is enabled.
+- Use Region detection (區域辨識診斷) to inspect which areas of the interface are currently visible and recognized.
+
+## 繁體中文
+
+### 顯示模式
+
+**全視窗模式：** 以單一背景來源覆蓋整個視窗，其他分區來源暫停輪播，原有設定仍會保留。
+
+**分區模式：** 五個區域皆可選擇共用背景、原生色、獨立背景或 A～E 同步群組。共用圖片不會作為其他區域的底圖。
+
+### 同步群組設定
+
+1. 開啟背景設定，將全域顯示模式設為「分區模式」。
+2. 展開需要同步的各個區域，在「背景模式」中選擇相同群組，例如「同步群組 A」。
+3. 展開「同步群組設定（A～E）」中的群組 A，選取資料夾或套用路徑。
+4. 設定群組的輪播、轉場、縮放與位置。其他群組依相同方式設定。
+
+| 區域 | 配置範例 |
+| --- | --- |
+| 伺服器列表 | 群組 B |
+| 頻道／私訊列表 | 群組 A |
+| 中央聊天區 | 獨立背景 |
+| 成員列表 | 群組 A |
+| 使用者控制列 | 群組 B |
+
+群組 A 與群組 B 各自輪播，中央聊天區另有獨立計時器。同群組以所有可見成員的最小外接矩形作為共同畫布，各區顯示對應裁切範圍；即使區域不相鄰，也會保留實際間距。
+
+### 外觀設定與來源行為
+
+- 共用背景使用全視窗座標，同步群組使用群組共同畫布。
+- 共用及群組模式的區域覆寫僅限暗化與模糊。縮放與位置由來源統一控制；如需單獨取景，請使用獨立背景。
+- 群組至少須有一個區域加入，才能設定圖片來源。最後一個區域退出後會停止輪播並釋放圖片資源，群組設定仍保留。
+- 切換全域顯示模式會保留設定及本次工作階段中暫停來源的圖片清單；恢復時可能從不同圖片開始輪播。
+- 原生選取方式僅保存資料夾名稱，重新啟動後需再次選取。路徑模式可透過自動載入選項在啟動時讀取。
+- 可使用「區域辨識診斷」檢視目前可見且已辨識的介面區域。
+
+[返回繁體中文 README](README.zh-TW.md)
